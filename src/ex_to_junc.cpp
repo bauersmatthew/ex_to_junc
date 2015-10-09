@@ -14,6 +14,9 @@
 #include "api/BamWriter.h"
 #include "api/BamAux.h"
 #include "api/SamHeader.h"
+#include <cstdio>
+
+using namespace BamTools;
 
 const int ARGC_MIN = 3;
 const int ARGC_MAX = 3;
@@ -25,7 +28,7 @@ struct Sec
 {
 	uint32_t start;
 	uint32_t end;
-}
+};
 std::vector<Sec> ReadBed(const std::string& path);
 Sec GetSecFromBedLine(const std::string& line);
 std::vector<std::string> SepTab(const std::string& str);
@@ -106,7 +109,7 @@ std::vector<Sec> ReadBed(const std::string& path)
 	}
 	
 	std::vector<Sec> ret;
-	std::vector<Sec> csec;
+	Sec csec;
 
 	// read line by line
 	std::string line;
@@ -143,16 +146,16 @@ Sec GetSecFromBedLine(const std::string& line)
 {
 	// break up
 	std::vector<std::string> seps = SepTab(line);
-	if(seps.size() < 4) // bed format: name, chrom, start, end
+	if(seps.size() < 3) // bed format: chrom, start, end, [name]
 	{
 		throw "invalid bed line";
 	}
 	
 	// convert
 	Sec ret;
-	if(!StrToT<uint32_t>(seps.at(2), &ret.start))
+	if(!StrToT<uint32_t>(seps.at(1), &ret.start))
 		throw "invalid bed line";
-	if(!StrToT<uint32_t>(seps.at(3), &ret.end))
+	if(!StrToT<uint32_t>(seps.at(2), &ret.end))
 		throw "invalid bed line";
 	
 	// return
@@ -282,6 +285,9 @@ void RMPBam(BamReader& br, std::vector<Sec>& secs)
 		read_char = fin.get();
 	}
 	fin.close();
+	
+	// delete the temp file
+	remove(TMP_PATH.c_str());
 	
 	// done!
 }
